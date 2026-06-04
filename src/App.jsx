@@ -11,18 +11,19 @@ const BRAND = {
 const LOGO_SRC = "data:image/png;base64,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";
 
 // ─── Hugging Face Config ──────────────────────────────────────────────────────
-// Admin sets HF_REPO + HF_TOKEN in admin panel. Stored in localStorage (admin device only).
-// Public users only need HF_REPO to fetch — no token needed for public datasets.
-const HF_CONFIG_KEY  = "adtree_hf_config";
+// PUBLIC_REPO is hardcoded — ALL users fetch from this repo automatically.
+// Token is only stored on admin device for uploading.
+const HF_PUBLIC_REPO = "radtree/brand-data";   // ← change this if repo changes
 const HF_FILE_PATH   = "hotels.csv";
+const HF_CONFIG_KEY  = "adtree_hf_config";
 
 const getHFConfig  = () => { try{ return JSON.parse(localStorage.getItem(HF_CONFIG_KEY)||"{}"); }catch{ return {}; } };
 const saveHFConfig = cfg => localStorage.setItem(HF_CONFIG_KEY, JSON.stringify(cfg));
 
-// Public fetch URL (no token needed for public dataset)
-const getHFFetchUrl = (repo) => `https://huggingface.co/datasets/${repo}/resolve/main/${HF_FILE_PATH}?t=${Date.now()}`;
+// All users fetch from the hardcoded public repo — no token needed
+const HF_FETCH_URL   = `https://huggingface.co/datasets/${HF_PUBLIC_REPO}/resolve/main/${HF_FILE_PATH}`;
 
-// Upload URL — HF Hub commit API (correct endpoint)
+// Admin upload — uses token from localStorage
 const getHFCommitUrl = (repo) => `https://huggingface.co/api/datasets/${repo}/commit/main`;
 
 // ─── Default hotel data (fallback if Hugging Face not configured) ──────────────
@@ -154,34 +155,28 @@ export default function App() {
 
   // ── Fetch from Hugging Face on load ─────────────────────────────────────────
   const [hfConfig, setHFConfigSt] = useState(getHFConfig);
-  const [hfInput,  setHFInput]    = useState(()=>{ const c=getHFConfig(); return {repo:c.repo||"",token:c.token||""}; });
+  const [hfInput,  setHFInput]    = useState(()=>{ const c=getHFConfig(); return {token:c.token||""}; });
 
   const saveHFConfig2 = () => {
-    if(!hfInput.repo.trim()){ setCsvMsg("✗ Nama repo wajib diisi."); setCsvStatus("error"); return; }
     if(!hfInput.token.trim()){ setCsvMsg("✗ Access token wajib diisi."); setCsvStatus("error"); return; }
-    const cfg = {repo:hfInput.repo.trim(), token:hfInput.token.trim()};
+    const cfg = {repo:HF_PUBLIC_REPO, token:hfInput.token.trim()};
     saveHFConfig(cfg); setHFConfigSt(cfg);
-    setCsvStatus("success"); setCsvMsg(`✓ Konfigurasi disimpan! Repo: ${cfg.repo}`);
+    setCsvStatus("success"); setCsvMsg(`✓ Token disimpan! Upload CSV siap digunakan.`);
   };
 
   useEffect(()=>{
-    const cfg = getHFConfig();
-    if(cfg.repo) {
-      setLoading(true);
-      fetch(getHFFetchUrl(cfg.repo))
-        .then(r=>{ if(!r.ok) throw new Error("Gagal fetch HF"); return r.text(); })
-        .then(text=>{
-          const rows = parseCSV(text);
-          const parsed = rows.filter(r=>(r.poi_name||r.name||"").trim()).map(csvRowToHotel).map(enrichHotel).sort((a,b)=>b.score-a.score);
-          if(parsed.length) setHotels(parsed);
-          else setHotels(DEFAULT_HOTELS_RAW.map(enrichHotel).sort((a,b)=>b.score-a.score));
-        })
-        .catch(()=>setHotels(DEFAULT_HOTELS_RAW.map(enrichHotel).sort((a,b)=>b.score-a.score)))
-        .finally(()=>setLoading(false));
-    } else {
-      setHotels(DEFAULT_HOTELS_RAW.map(enrichHotel).sort((a,b)=>b.score-a.score));
-      setLoading(false);
-    }
+    // Always fetch from hardcoded public HF repo — works for ALL users
+    setLoading(true);
+    fetch(HF_FETCH_URL + "?t=" + Date.now())
+      .then(r=>{ if(!r.ok) throw new Error("No HF data"); return r.text(); })
+      .then(text=>{
+        const rows = parseCSV(text);
+        const parsed = rows.filter(r=>(r.poi_name||r.name||"").trim()).map(csvRowToHotel).map(enrichHotel).sort((a,b)=>b.score-a.score);
+        if(parsed.length) setHotels(parsed);
+        else setHotels(DEFAULT_HOTELS_RAW.map(enrichHotel).sort((a,b)=>b.score-a.score));
+      })
+      .catch(()=>setHotels(DEFAULT_HOTELS_RAW.map(enrichHotel).sort((a,b)=>b.score-a.score)))
+      .finally(()=>setLoading(false));
   },[]);
 
   const toggleSave = useCallback(id=>{
@@ -199,8 +194,9 @@ export default function App() {
   const handleCSV = e=>{
     const file=e.target.files[0]; if(!file) return;
     const cfg = getHFConfig();
-    if(!cfg.repo || !cfg.token){
-      setCsvStatus("error"); setCsvMsg("✗ Setup Hugging Face dulu di tab ⚙ HF Setup."); return;
+    const uploadRepo = cfg.repo || HF_PUBLIC_REPO;
+    if(!cfg.token){
+      setCsvStatus("error"); setCsvMsg("✗ Isi Access Token dulu di tab ⚙ HF Setup."); return;
     }
     setCsvStatus("loading"); setCsvMsg("Membaca & mengupload ke Hugging Face...");
     const reader=new FileReader();
@@ -223,7 +219,7 @@ export default function App() {
             content: b64Content,
           }],
         };
-        const res = await fetch(getHFCommitUrl(cfg.repo), {
+        const res = await fetch(getHFCommitUrl(uploadRepo), {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${cfg.token}`,
@@ -300,12 +296,12 @@ export default function App() {
             </div>
           ))}
 
-          <label style={S.formLabel}>Nama Repo (format: username/nama-dataset)</label>
-          <input value={hfInput.repo} onChange={e=>setHFInput(p=>({...p,repo:e.target.value}))}
-            placeholder="contoh: adtree/brand-data"
-            style={{...S.formInput,marginBottom:12}}/>
+          <div style={{background:"#1A2640",borderRadius:10,padding:"10px 14px",marginBottom:14,border:`1px solid ${BRAND.cardBorder}`}}>
+            <div style={{fontSize:10,color:BRAND.textMuted,fontWeight:700,letterSpacing:"0.08em",marginBottom:4}}>REPO (HARDCODED)</div>
+            <div style={{fontSize:13,fontWeight:700,color:BRAND.green}}>{HF_PUBLIC_REPO}</div>
+          </div>
 
-          <label style={S.formLabel}>Access Token (Write)</label>
+          <label style={S.formLabel}>Access Token (Write) — Disimpan di device ini saja</label>
           <input value={hfInput.token} onChange={e=>setHFInput(p=>({...p,token:e.target.value}))}
             type="password" placeholder="hf_xxxxxxxxxxxxxxxxxxxx"
             style={{...S.formInput,marginBottom:10}}/>
@@ -333,7 +329,7 @@ export default function App() {
           <div style={{background:"#1A2640",borderRadius:12,padding:"12px 14px",marginTop:12,border:`1px solid ${BRAND.cardBorder}`}}>
             <div style={{fontSize:11,fontWeight:700,color:BRAND.textSub,marginBottom:4}}>Status Saat Ini</div>
             <div style={{fontSize:11,color:hfConfig.repo?BRAND.green:BRAND.textMuted}}>
-              {hfConfig.repo ? `✓ HF aktif: ${hfConfig.repo}` : "✗ Belum dikonfigurasi — app pakai data default"}
+              {hfConfig.token ? `✓ Token tersimpan · Repo: ${HF_PUBLIC_REPO}` : "⚠ Token belum diisi — upload CSV belum bisa, tapi semua user tetap fetch data dari HF"}
             </div>
           </div>
         </div>
