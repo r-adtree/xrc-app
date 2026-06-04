@@ -216,10 +216,9 @@ export default function App() {
         // Step 1: base64 encode the CSV content
         const b64Content = btoa(unescape(encodeURIComponent(text)));
         const commitBody = {
-          commit_message: "Update hotels.csv via AdtreeGO admin",
-          operations: [{
-            key: HF_FILE_PATH,
-            type: "file",
+          summary: "Update hotels.csv via AdtreeGO admin",
+          files: [{
+            path: HF_FILE_PATH,
             encoding: "base64",
             content: b64Content,
           }],
