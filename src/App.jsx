@@ -54,7 +54,7 @@ const getTierColor = (tier) => {
   if(tier.includes("High") || tier.includes(">50")) return BRAND.purple;
   return BRAND.yellow;
 };
-const TAG_ICON   = {"Best Weekend Staycations":"🏖️","Romantic Stays":"💑","Family Friendly":"👨\u200d👩\u200d👧","SBG Top Picks":"⭐","Luxurious Stays":"💎","Weekend Getaway":"🌿"};
+const TAG_ICON   = {"SBG Top Picks":"⭐","Best Weekend Staycations":"🏖️","Romantic Stays":"💑","Family Friendly":"👨\u200d👩\u200d👧","Luxurious Stays":"💎","Weekend Getaway":"🌿"};
 const ALL_TAGS   = Object.keys(TAG_ICON);
 const ALL_L1     = ["Semua Provinsi",...Array.from(new Set(DEFAULT_HOTELS_RAW.map(h=>h.l1))).sort()];
 
