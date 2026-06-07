@@ -71,7 +71,7 @@ function normalizeTier(t) {
 }
 function enrichHotel(h) {
   const normalized = normalizeTier(h.price_tier);
-  return { ...h, price_tier: normalized, score:calcScore({...h,price_tier:normalized}), photo:h.photo||fallbackPhoto(h.poi_id), thumb:(h.photo?h.photo.replace("w=400&h=260","w=80&h=80"):null)||fallbackThumb(h.poi_id), promo:h.promo||autoPromo(h.poi_id), published:h.published!==false };
+  return { ...h, price_tier: normalized, score:calcScore({...h,price_tier:normalized}), photo:h.photo||fallbackPhoto(h.poi_id), thumb:(h.photo?h.photo.replace("w=400&h=260","w=80&h=80"):null)||fallbackThumb(h.poi_id), promo:h.promo||autoPromo(h.poi_id), discount_range:h.discount_range||"", published:h.published!==false };
 }
 
 // ─── CSV Parser ───────────────────────────────────────────────────────────────
@@ -106,6 +106,7 @@ function csvRowToHotel(row) {
     tags, photo:row.photo_url||row.photo||"",
     promo:row.promo_text||row.promo||"",
     drive_link:row.drive_link||row.wa_link||"",
+    discount_range:row.discount_range||"",
     published:(row.published||"Yes")!=="No",
   };
 }
@@ -442,14 +443,14 @@ export default function App() {
         <div style={{background:"#F5C84209",border:`1px solid #F5C84230`,borderRadius:12,padding:"12px 14px",marginBottom:14}}>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
             <span style={{fontSize:10,fontWeight:800,color:BRAND.yellow,letterSpacing:"0.1em"}}>🎁 PROMO AKTIF</span>
-            <span style={{fontSize:11,fontWeight:800,color:BRAND.green,background:"#2DD4A422",borderRadius:10,padding:"2px 8px"}}>Max 40%</span>
+            {sel.discount_range&&<span style={{fontSize:12,fontWeight:800,color:BRAND.red,background:"#E8547A18",borderRadius:10,padding:"3px 10px",border:"1px solid #E8547A44"}}>🏷️ {sel.discount_range}</span>}
           </div>
-          <div style={{fontSize:13,fontWeight:600,color:BRAND.textSub,lineHeight:1.5}}>{sel.promo}</div>
+          <div style={{fontSize:14,fontWeight:700,color:BRAND.textSub,lineHeight:1.5}}>{sel.promo}</div>
         </div>
 
         {/* Stats */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-          {[["💰","AOV/Malam",fmtIdr(sel.aov_idr)],["⭐","Bintang",sel.star>0?sel.star+" ★":"N/A"],["🗺️","Provinsi",sel.l1.length>12?sel.l1.slice(0,11)+"…":sel.l1],["📍","Kota/Kab",(sel.city_display||sel.l2).length>11?(sel.city_display||sel.l2).slice(0,10)+"…":(sel.city_display||sel.l2)],["📊","Harga",getTierLabel(sel.price_tier)],["🎯","Skor",sel.score+" pt"]].map(([ico,lbl,val])=>(
+          {[["💰","AOV/Malam",fmtIdr(sel.aov_idr)],["⭐","Bintang",sel.star>0?sel.star+" ★":"N/A"],["🗺️","Provinsi",sel.l1.length>12?sel.l1.slice(0,11)+"…":sel.l1],["📍","Kota/Kab",(sel.city_display||sel.l2).length>11?(sel.city_display||sel.l2).slice(0,10)+"…":(sel.city_display||sel.l2)],["📊","Harga",getTierLabel(sel.price_tier)],["🏷️","Diskon",sel.discount_range||"—"]].map(([ico,lbl,val])=>(
             <div key={lbl} style={{background:"#1A2640",borderRadius:10,padding:"10px",display:"flex",flexDirection:"column",gap:3}}>
               <span style={{fontSize:14}}>{ico}</span>
               <div style={{fontSize:9,color:BRAND.textMuted,letterSpacing:"0.08em",fontWeight:700}}>{lbl}</div>
@@ -582,7 +583,8 @@ export default function App() {
                       <div style={{fontSize:12,fontWeight:700,color:BRAND.text,lineHeight:1.3,marginBottom:3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{h.name}</div>
                       <div style={{fontSize:10,color:BRAND.textMuted,marginBottom:4}}>📍 {h.city_display||h.l2}</div>
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><Stars count={h.star}/><ScoreBadge val={h.score}/></div>
-                      <div style={{fontSize:13,fontWeight:800,color:BRAND.yellow,marginTop:5}}>{fmtIdr(h.aov_idr)}<span style={{fontSize:10,fontWeight:400,color:BRAND.textMuted,marginLeft:2}}>/malam</span></div>
+                      {h.discount_range&&<div style={{fontSize:9,fontWeight:800,color:BRAND.red,background:"#E8547A18",borderRadius:8,padding:"2px 6px",marginTop:4,display:"inline-block"}}>🏷️ {h.discount_range}</div>}
+                      <div style={{fontSize:13,fontWeight:800,color:BRAND.yellow,marginTop:4}}>{fmtIdr(h.aov_idr)}<span style={{fontSize:10,fontWeight:400,color:BRAND.textMuted,marginLeft:2}}>/malam</span></div>
                     </div>
                   </div>
                 ))}
@@ -606,6 +608,7 @@ export default function App() {
                   <div style={{fontSize:13,fontWeight:700,color:BRAND.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{h.name}</div>
                   <div style={{fontSize:10,color:BRAND.textMuted,marginTop:2,marginBottom:4}}>📍 {h.city_display||h.l2}, {h.l1}</div>
                   <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+                    {h.discount_range&&<span style={{fontSize:9,fontWeight:800,background:"#E8547A22",color:BRAND.red,borderRadius:10,padding:"2px 7px",border:"1px solid #E8547A44"}}>🏷️ {h.discount_range}</span>}
                     {h.tags.slice(0,2).map(t=><span key={t} style={{fontSize:9,fontWeight:600,background:"#1E2A45",color:BRAND.textMuted,borderRadius:10,padding:"2px 6px",border:`1px solid ${BRAND.cardBorder}`}}>{TAG_ICON[t]} {t.split(" ")[0]}</span>)}
                     <ScoreBadge val={h.score}/>
                   </div>
@@ -635,11 +638,12 @@ export default function App() {
 }
 
 function AddBrandForm({onAdd}) {
-  const [f,setF]=useState({name:"",l1:"Jakarta",l2:"",city_display:"",star:"4",price_tier:"Mid [30,50]",aov_usd:"40",photo:"",promo:"",drive_link:"",tags:[]});
+  const DISCOUNT_OPTIONS=["","~5%","5-10%","10-15%","15-20%","20-25%","25-30%","30-35%","35-40%","Max 40%"];
+  const [f,setF]=useState({name:"",l1:"Jakarta",l2:"",city_display:"",star:"4",price_tier:"Mid [30,50]",aov_usd:"40",photo:"",promo:"",drive_link:"",discount_range:"",tags:[]});
   const toggle=t=>setF(p=>({...p,tags:p.tags.includes(t)?p.tags.filter(x=>x!==t):[...p.tags,t]}));
   const submit=()=>{
     if(!f.name.trim()||!f.l2.trim()){alert("Nama hotel dan kota wajib diisi.");return;}
-    onAdd({poi_id:"manual_"+Date.now(),name:f.name,l1:f.l1,l2:f.l2,city_display:f.city_display||f.l2,star:parseFloat(f.star)||4,price_tier:f.price_tier,aov_idr:Math.round((parseFloat(f.aov_usd)||40)*18000),tags:f.tags,photo:f.photo,promo:f.promo,drive_link:f.drive_link,published:true});
+    onAdd({poi_id:"manual_"+Date.now(),name:f.name,l1:f.l1,l2:f.l2,city_display:f.city_display||f.l2,star:parseFloat(f.star)||4,price_tier:f.price_tier,aov_idr:Math.round((parseFloat(f.aov_usd)||40)*18000),tags:f.tags,photo:f.photo,promo:f.promo,drive_link:f.drive_link,discount_range:f.discount_range,published:true});
   };
   return (
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -652,6 +656,7 @@ function AddBrandForm({onAdd}) {
         <div><label style={S.formLabel}>AOV (USD)</label><input value={f.aov_usd} onChange={e=>setF(p=>({...p,aov_usd:e.target.value}))} style={S.formInput} type="number"/></div>
       </div>
       <div><label style={S.formLabel}>Tier Harga</label><select value={f.price_tier} onChange={e=>setF(p=>({...p,price_tier:e.target.value}))} style={{...S.formInput,height:40}}>{["Low [0,30]","Mid [30,50]","High [>50]"].map(t=><option key={t}>{t}</option>)}</select></div>
+      <div><label style={S.formLabel}>Rentang Diskon</label><select value={f.discount_range} onChange={e=>setF(p=>({...p,discount_range:e.target.value}))} style={{...S.formInput,height:40}}>{DISCOUNT_OPTIONS.map(d=><option key={d} value={d}>{d||"— Tidak ada diskon —"}</option>)}</select></div>
       <div><label style={S.formLabel}>Provinsi</label><select value={f.l1} onChange={e=>setF(p=>({...p,l1:e.target.value}))} style={{...S.formInput,height:40}}>{ALL_L1.filter(r=>r!=="Semua Provinsi").map(r=><option key={r}>{r}</option>)}</select></div>
       <div><label style={S.formLabel}>Kampanye Aktif</label>
         <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:6}}>{ALL_TAGS.map(t=><button key={t} onClick={()=>toggle(t)} style={{fontSize:10,fontWeight:600,padding:"5px 10px",borderRadius:20,border:`1px solid ${f.tags.includes(t)?BRAND.yellow:BRAND.cardBorder}`,background:f.tags.includes(t)?BRAND.yellowDim:"transparent",color:f.tags.includes(t)?BRAND.yellow:BRAND.textMuted,cursor:"pointer"}}>{TAG_ICON[t]} {t}</button>)}</div>
