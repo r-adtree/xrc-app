@@ -54,7 +54,7 @@ const getTierColor = (tier) => {
   if(tier.includes("High") || tier.includes(">50")) return BRAND.purple;
   return BRAND.yellow;
 };
-const TAG_ICON   = {"GO Pick":"⚡","Best Weekend Staycations":"🏖️","Romantic Stays":"💑","Family Friendly":"👨\u200d👩\u200d👧","Luxurious Stays":"💎","Weekend Getaway":"🌿"};
+const TAG_ICON   = {"Best Weekend Staycations":"🏖️","Romantic Stays":"💑","Family Friendly":"👨\u200d👩\u200d👧","Luxurious Stays":"💎","Weekend Getaway":"🌿"};
 const ALL_TAGS   = Object.keys(TAG_ICON);
 const ALL_L1     = ["Semua Provinsi",...Array.from(new Set(DEFAULT_HOTELS_RAW.map(h=>h.l1))).sort()];
 
@@ -90,8 +90,8 @@ function parseCSV(text) {
 }
 
 function csvRowToHotel(row) {
-  const tagKeys=["best_weekend","romantic_stays","family_friendly","sbg_top_picks","luxurious_stays","weekend_getaway"];
-  const tagNames=["Best Weekend Staycations","Romantic Stays","Family Friendly","GO Pick","Luxurious Stays","Weekend Getaway"];
+  const tagKeys=["best_weekend","romantic_stays","family_friendly","luxurious_stays","weekend_getaway"];
+  const tagNames=["Best Weekend Staycations","Romantic Stays","Family Friendly","Luxurious Stays","Weekend Getaway"];
   const tags=tagKeys.map((k,i)=>row[k]==="Yes"?tagNames[i]:null).filter(Boolean);
   const aov_usd=parseFloat(row.aov_usd)||30;
   return {
@@ -603,8 +603,8 @@ export default function App() {
           <div style={S.tagRow}>
             <button style={{...S.tagBtn,...(tag===null?S.tagActive:{})}} onClick={()=>setTag(null)}>Semua</button>
             {ALL_TAGS.map(t=>(
-              <button key={t} style={{...S.tagBtn,...(tag===t?S.tagActive:{}),...(t==="GO Pick"&&tag!==t?{border:"1px solid #F5C84255",color:"#F5C842",background:"#F5C84210"}:{})}} onClick={()=>setTag(tag===t?null:t)}>
-                {TAG_ICON[t]} {t==="GO Pick"?"GO Pick":t.split(" ")[0]}
+              <button key={t} style={{...S.tagBtn,...(tag===t?S.tagActive:{})}} onClick={()=>setTag(tag===t?null:t)}>
+                {TAG_ICON[t]} {t.split(" ")[0]}
               </button>
             ))}
           </div>
