@@ -144,6 +144,7 @@ export default function App() {
   const [cat,       setCat]       = useState("accommodations");
   const [l1,        setL1]        = useState("Semua Provinsi");
   const [tag,       setTag]       = useState(null);
+  const [pickFilter, setPickFilter] = useState(null); // null | "adtree" | "tiktok"
   const [search,    setSearch]    = useState("");
   const [sel,       setSel]       = useState(null);
   const [drop,      setDrop]      = useState(false);
@@ -251,9 +252,11 @@ export default function App() {
     let d=hotels.filter(h=>h.published);
     if(l1!=="Semua Provinsi") d=d.filter(h=>h.l1===l1);
     if(tag) d=d.filter(h=>h.tags.includes(tag));
+    if(pickFilter==="adtree") d=d.filter(h=>h.adtree_pick==="Yes");
+    if(pickFilter==="tiktok") d=d.filter(h=>h.tiktok_pick==="Yes");
     if(search.trim()){const q=search.toLowerCase();d=d.filter(h=>h.name.toLowerCase().includes(q)||h.l2.toLowerCase().includes(q)||h.l1.toLowerCase().includes(q));}
     return d;
-  },[hotels,l1,tag,search]);
+  },[hotels,l1,tag,pickFilter,search]);
 
   const savedHotels = useMemo(()=>hotels.filter(h=>saved.includes(h.poi_id)),[hotels,saved]);
   const displayList = view==="saved"?savedHotels:filtered;
@@ -600,8 +603,24 @@ export default function App() {
             <div style={S.countBadge}>{displayList.length} brand</div>
           </div>
 
+          {/* Pick filter quick access */}
+          <div style={{display:"flex",gap:8,padding:"12px 16px 0"}}>
+            <button onClick={()=>{setPickFilter(null);setTag(null);}}
+              style={{flex:1,padding:"8px 10px",borderRadius:10,border:`1px solid ${pickFilter===null&&tag===null?BRAND.yellow:BRAND.cardBorder}`,background:pickFilter===null&&tag===null?BRAND.yellowDim:"transparent",color:pickFilter===null&&tag===null?BRAND.yellow:BRAND.textMuted,fontSize:11,fontWeight:700,cursor:"pointer"}}>
+              Semua Brand
+            </button>
+            <button onClick={()=>{setPickFilter(pickFilter==="adtree"?null:"adtree");setTag(null);}}
+              style={{flex:1,padding:"8px 10px",borderRadius:10,border:`1px solid ${pickFilter==="adtree"?"#F5C842":"#F5C84244"}`,background:pickFilter==="adtree"?"linear-gradient(135deg,#F5C842,#F5A020)":BRAND.yellowDim,color:pickFilter==="adtree"?"#0A0C10":BRAND.yellow,fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+              ⚡ Adtree Pick
+            </button>
+            <button onClick={()=>{setPickFilter(pickFilter==="tiktok"?null:"tiktok");setTag(null);}}
+              style={{flex:1,padding:"8px 10px",borderRadius:10,border:`1px solid ${pickFilter==="tiktok"?"#FF6B8A":"#FF6B8A44"}`,background:pickFilter==="tiktok"?"linear-gradient(135deg,#FF2D55,#FF6B8A)":"#FF2D5510",color:pickFilter==="tiktok"?"#fff":"#FF6B8A",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+              🎯 GO Featured
+            </button>
+          </div>
+
           <div style={S.tagRow}>
-            <button style={{...S.tagBtn,...(tag===null?S.tagActive:{})}} onClick={()=>setTag(null)}>Semua</button>
+            <button style={{...S.tagBtn,...(tag===null&&pickFilter===null?S.tagActive:{})}} onClick={()=>{setTag(null);setPickFilter(null);}}>Semua</button>
             {ALL_TAGS.map(t=>(
               <button key={t} style={{...S.tagBtn,...(tag===t?S.tagActive:{})}} onClick={()=>setTag(tag===t?null:t)}>
                 {TAG_ICON[t]} {t.split(" ")[0]}
@@ -609,7 +628,7 @@ export default function App() {
             ))}
           </div>
 
-          {view==="home"&&!search&&!tag&&l1==="Semua Provinsi"&&filtered.length>0&&(
+          {view==="home"&&!search&&!tag&&!pickFilter&&l1==="Semua Provinsi"&&filtered.length>0&&(
             <section style={{padding:"14px 0 0"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px 10px"}}>
                 <span style={S.secHeadTxt}>🏆 Skor Tertinggi</span>
@@ -648,7 +667,7 @@ export default function App() {
 
           <section style={{padding:"14px 16px 0"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingBottom:10}}>
-              <span style={S.secHeadTxt}>{view==="saved"?"🔖 Tersimpan":tag?`${TAG_ICON[tag]} ${tag}`:search?`"${search}"`:cat==="accommodations"?"Semua Akomodasi":""}</span>
+              <span style={S.secHeadTxt}>{view==="saved"?"🔖 Tersimpan":pickFilter==="adtree"?"⚡ Adtree Pick":pickFilter==="tiktok"?"🎯 GO Featured":tag?`${TAG_ICON[tag]} ${tag}`:search?`"${search}"`:cat==="accommodations"?"Semua Akomodasi":""}</span>
               <span style={S.secHeadCount}>{displayList.length}</span>
             </div>
             {displayList.length===0&&<div style={S.empty}>{view==="saved"?<span>Belum ada brand tersimpan.<br/>Tap 🔖 untuk menyimpan.</span>:"Tidak ada brand ditemukan."}</div>}
