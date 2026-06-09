@@ -54,7 +54,7 @@ const getTierColor = (tier) => {
   if(tier.includes("High") || tier.includes(">50")) return BRAND.purple;
   return BRAND.yellow;
 };
-const TAG_ICON   = {"SBG Top Picks":"⭐","Best Weekend Staycations":"🏖️","Romantic Stays":"💑","Family Friendly":"👨\u200d👩\u200d👧","Luxurious Stays":"💎","Weekend Getaway":"🌿"};
+const TAG_ICON   = {"GO Pick":"⚡","Best Weekend Staycations":"🏖️","Romantic Stays":"💑","Family Friendly":"👨\u200d👩\u200d👧","Luxurious Stays":"💎","Weekend Getaway":"🌿"};
 const ALL_TAGS   = Object.keys(TAG_ICON);
 const ALL_L1     = ["Semua Provinsi",...Array.from(new Set(DEFAULT_HOTELS_RAW.map(h=>h.l1))).sort()];
 
@@ -71,7 +71,7 @@ function normalizeTier(t) {
 }
 function enrichHotel(h) {
   const normalized = normalizeTier(h.price_tier);
-  return { ...h, price_tier: normalized, score:calcScore({...h,price_tier:normalized}), photo:h.photo||fallbackPhoto(h.poi_id), thumb:(h.photo?h.photo.replace("w=400&h=260","w=80&h=80"):null)||fallbackThumb(h.poi_id), promo:h.promo||autoPromo(h.poi_id), discount_range:h.discount_range||"", published:h.published!==false };
+  return { ...h, price_tier: normalized, score:calcScore({...h,price_tier:normalized}), photo:h.photo||fallbackPhoto(h.poi_id), thumb:(h.photo?h.photo.replace("w=400&h=260","w=80&h=80"):null)||fallbackThumb(h.poi_id), promo:h.promo||autoPromo(h.poi_id), discount_range:h.discount_range||"", tg_pick:h.tg_pick||"", ad_pick:h.ad_pick||"", published:h.published!==false, adtree_pick:h.adtree_pick||"", tiktok_pick:h.tiktok_pick||"" };
 }
 
 // ─── CSV Parser ───────────────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ function parseCSV(text) {
 
 function csvRowToHotel(row) {
   const tagKeys=["best_weekend","romantic_stays","family_friendly","sbg_top_picks","luxurious_stays","weekend_getaway"];
-  const tagNames=["Best Weekend Staycations","Romantic Stays","Family Friendly","SBG Top Picks","Luxurious Stays","Weekend Getaway"];
+  const tagNames=["Best Weekend Staycations","Romantic Stays","Family Friendly","GO Pick","Luxurious Stays","Weekend Getaway"];
   const tags=tagKeys.map((k,i)=>row[k]==="Yes"?tagNames[i]:null).filter(Boolean);
   const aov_usd=parseFloat(row.aov_usd)||30;
   return {
@@ -106,7 +106,11 @@ function csvRowToHotel(row) {
     tags, photo:row.photo_url||row.photo||"",
     promo:row.promo_text||row.promo||"",
     drive_link:row.drive_link||row.wa_link||"",
+    adtree_pick:row.adtree_pick||"",
+    tiktok_pick:row.tiktok_pick||"",
     discount_range:row.discount_range||"",
+    tg_pick:row.tg_pick||"",
+    ad_pick:row.ad_pick||"",
     published:(row.published||"Yes")!=="No",
   };
 }
@@ -439,6 +443,30 @@ export default function App() {
           <button onClick={()=>toggleSave(sel.poi_id)} style={{background:saved.includes(sel.poi_id)?BRAND.yellowDim:"transparent",border:`1px solid ${saved.includes(sel.poi_id)?BRAND.yellow:BRAND.cardBorder}`,borderRadius:10,padding:"7px 10px",cursor:"pointer",fontSize:18,marginLeft:10,flexShrink:0}}>🔖</button>
         </div>
 
+        {/* Pick Banners */}
+        {(sel.adtree_pick==="Yes"||sel.tiktok_pick==="Yes")&&(
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
+            {sel.tiktok_pick==="Yes"&&(
+              <div style={{display:"flex",alignItems:"center",gap:10,background:"linear-gradient(135deg,#FF2D5512,#FF6B8A0A)",border:"1px solid #FF2D5533",borderRadius:12,padding:"10px 14px"}}>
+                <div style={{background:"linear-gradient(135deg,#FF2D55,#FF6B8A)",borderRadius:8,padding:"5px 9px",fontSize:15,lineHeight:1}}>🎯</div>
+                <div>
+                  <div style={{fontSize:11,fontWeight:800,color:"#FF6B8A",letterSpacing:"0.08em"}}>GO Featured</div>
+                  <div style={{fontSize:11,color:BRAND.textMuted,marginTop:1}}>Brand ini dipilih langsung oleh TikTok GO</div>
+                </div>
+              </div>
+            )}
+            {sel.adtree_pick==="Yes"&&(
+              <div style={{display:"flex",alignItems:"center",gap:10,background:"linear-gradient(135deg,#F5C84212,#F5A02008)",border:"1px solid #F5C84233",borderRadius:12,padding:"10px 14px"}}>
+                <div style={{background:"linear-gradient(135deg,#F5C842,#F5A020)",borderRadius:8,padding:"5px 9px",fontSize:15,lineHeight:1}}>⚡</div>
+                <div>
+                  <div style={{fontSize:11,fontWeight:800,color:BRAND.yellow,letterSpacing:"0.08em"}}>Adtree Pick</div>
+                  <div style={{fontSize:11,color:BRAND.textMuted,marginTop:1}}>Brand pilihan tim AdtreeGO untuk kreator</div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Promo */}
         <div style={{background:"#F5C84209",border:`1px solid #F5C84230`,borderRadius:12,padding:"12px 14px",marginBottom:14}}>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
@@ -460,6 +488,22 @@ export default function App() {
         </div>
 
         {/* Campaign Tags */}
+        {(sel.tg_pick==="Yes"||sel.ad_pick==="Yes")&&(
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            {sel.tg_pick==="Yes"&&(
+              <div style={{flex:1,display:"flex",alignItems:"center",gap:8,background:"#FF004410",border:"1px solid #FF004440",borderRadius:12,padding:"10px 14px"}}>
+                <span style={{fontSize:20}}>🎯</span>
+                <div><div style={{fontSize:11,fontWeight:800,color:"#FF8899"}}>TG Pick</div><div style={{fontSize:9,color:"rgba(255,136,153,0.7)"}}>TikTok GO Recommendation</div></div>
+              </div>
+            )}
+            {sel.ad_pick==="Yes"&&(
+              <div style={{flex:1,display:"flex",alignItems:"center",gap:8,background:"#7C6AF710",border:"1px solid #7C6AF740",borderRadius:12,padding:"10px 14px"}}>
+                <span style={{fontSize:20}}>⚡</span>
+                <div><div style={{fontSize:11,fontWeight:800,color:"#B8AEFF"}}>Adtree Pick</div><div style={{fontSize:9,color:"rgba(184,174,255,0.7)"}}>Adtree Recommendation</div></div>
+              </div>
+            )}
+          </div>
+        )}
         <div style={{fontSize:11,fontWeight:700,color:BRAND.textMuted,letterSpacing:"0.1em",marginBottom:8}}>Jenis Kampanye</div>
         <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:20}}>
           {sel.tags.map(t=>(
@@ -559,8 +603,8 @@ export default function App() {
           <div style={S.tagRow}>
             <button style={{...S.tagBtn,...(tag===null?S.tagActive:{})}} onClick={()=>setTag(null)}>Semua</button>
             {ALL_TAGS.map(t=>(
-              <button key={t} style={{...S.tagBtn,...(tag===t?S.tagActive:{})}} onClick={()=>setTag(tag===t?null:t)}>
-                {TAG_ICON[t]} {t.split(" ")[0]}
+              <button key={t} style={{...S.tagBtn,...(tag===t?S.tagActive:{}),...(t==="GO Pick"&&tag!==t?{border:"1px solid #F5C84255",color:"#F5C842",background:"#F5C84210"}:{})}} onClick={()=>setTag(tag===t?null:t)}>
+                {TAG_ICON[t]} {t==="GO Pick"?"GO Pick":t.split(" ")[0]}
               </button>
             ))}
           </div>
@@ -577,6 +621,16 @@ export default function App() {
                     <div style={{position:"relative",height:108}}>
                       <img src={h.photo} alt={h.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={e=>e.target.src=FALLBACK_PHOTOS[0]}/>
                       <div style={{position:"absolute",top:8,left:8,fontSize:10,fontWeight:800,borderRadius:20,padding:"2px 8px",background:i===0?BRAND.yellow:i===1?"#C0C0C0":"#CD7F32",color:"#0A0C10"}}>#{i+1}</div>
+                      {(h.adtree_pick==="Yes"||h.tiktok_pick==="Yes")&&(
+                        <div style={{position:"absolute",top:8,right:8,display:"flex",gap:3}}>
+                          {h.tiktok_pick==="Yes"&&<div style={{fontSize:8,fontWeight:900,background:"linear-gradient(135deg,#FF2D55,#FF6B8A)",color:"#fff",borderRadius:6,padding:"2px 6px",letterSpacing:"0.04em",boxShadow:"0 2px 6px rgba(255,45,85,0.5)"}}>🎯 GO Featured</div>}
+                          {h.adtree_pick==="Yes"&&<div style={{fontSize:8,fontWeight:900,background:"linear-gradient(135deg,#F5C842,#F5A020)",color:"#0A0C10",borderRadius:6,padding:"2px 6px",letterSpacing:"0.04em",boxShadow:"0 2px 6px rgba(245,200,66,0.5)"}}>⚡ Adtree Pick</div>}
+                        </div>
+                      )}
+                      <div style={{position:"absolute",top:8,right:8,display:"flex",flexDirection:"column",gap:3}}>
+                        {h.tg_pick==="Yes"&&<div style={{fontSize:8,fontWeight:800,background:"rgba(0,0,0,0.6)",color:"#FF8899",border:"1px solid #FF004466",borderRadius:6,padding:"2px 6px",backdropFilter:"blur(4px)"}}>🎯 TG Pick</div>}
+                        {h.ad_pick==="Yes"&&<div style={{fontSize:8,fontWeight:800,background:"rgba(0,0,0,0.6)",color:"#B8AEFF",border:"1px solid #7C6AF766",borderRadius:6,padding:"2px 6px",backdropFilter:"blur(4px)"}}>⚡ AD Pick</div>}
+                      </div>
                       <div style={{position:"absolute",bottom:8,right:8,fontSize:9,fontWeight:700,borderRadius:20,padding:"2px 7px",color:getTierColor(h.price_tier),background:getTierColor(h.price_tier)+"25",border:`1px solid ${getTierColor(h.price_tier)}55`}}>{getTierLabel(h.price_tier)}</div>
                     </div>
                     <div style={{padding:"10px 12px 14px"}}>
@@ -603,6 +657,12 @@ export default function App() {
                 <div style={{position:"relative",flexShrink:0}}>
                   <img src={h.thumb} alt={h.name} style={S.listThumb} onError={e=>e.target.src=FALLBACK_THUMBS[0]}/>
                   <div style={{position:"absolute",left:42,top:42,width:11,height:11,borderRadius:"50%",border:`2px solid ${BRAND.bg}`,background:getTierColor(h.price_tier)}}/>
+                  {(h.adtree_pick==="Yes"||h.tiktok_pick==="Yes")&&(
+                    <div style={{position:"absolute",top:-6,left:-6,display:"flex",flexDirection:"column",gap:2}}>
+                      {h.adtree_pick==="Yes"&&<div style={{fontSize:7,fontWeight:900,background:"linear-gradient(135deg,#F5C842,#F5A020)",color:"#0A0C10",borderRadius:5,padding:"2px 5px",whiteSpace:"nowrap",letterSpacing:"0.05em",boxShadow:"0 2px 5px rgba(245,200,66,0.4)"}}>⚡ Adtree Pick</div>}
+                      {h.tiktok_pick==="Yes"&&<div style={{fontSize:7,fontWeight:900,background:"linear-gradient(135deg,#FF2D55,#FF6B8A)",color:"#fff",borderRadius:5,padding:"2px 5px",whiteSpace:"nowrap",letterSpacing:"0.05em",boxShadow:"0 2px 5px rgba(255,45,85,0.4)"}}>🎯 GO Featured</div>}
+                    </div>
+                  )}
                 </div>
                 <div style={S.listMeta}>
                   <div style={{fontSize:13,fontWeight:700,color:BRAND.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{h.name}</div>
@@ -639,11 +699,11 @@ export default function App() {
 
 function AddBrandForm({onAdd}) {
   const DISCOUNT_OPTIONS=["","~5%","5-10%","10-15%","15-20%","20-25%","25-30%","30-35%","35-40%","Max 40%"];
-  const [f,setF]=useState({name:"",l1:"Jakarta",l2:"",city_display:"",star:"4",price_tier:"Mid [30,50]",aov_usd:"40",photo:"",promo:"",drive_link:"",discount_range:"",tags:[]});
+  const [f,setF]=useState({name:"",l1:"Jakarta",l2:"",city_display:"",star:"4",price_tier:"Mid [30,50]",aov_usd:"40",photo:"",promo:"",drive_link:"",discount_range:"",tg_pick:"",ad_pick:"",tags:[]});
   const toggle=t=>setF(p=>({...p,tags:p.tags.includes(t)?p.tags.filter(x=>x!==t):[...p.tags,t]}));
   const submit=()=>{
     if(!f.name.trim()||!f.l2.trim()){alert("Nama hotel dan kota wajib diisi.");return;}
-    onAdd({poi_id:"manual_"+Date.now(),name:f.name,l1:f.l1,l2:f.l2,city_display:f.city_display||f.l2,star:parseFloat(f.star)||4,price_tier:f.price_tier,aov_idr:Math.round((parseFloat(f.aov_usd)||40)*18000),tags:f.tags,photo:f.photo,promo:f.promo,drive_link:f.drive_link,discount_range:f.discount_range,published:true});
+    onAdd({poi_id:"manual_"+Date.now(),name:f.name,l1:f.l1,l2:f.l2,city_display:f.city_display||f.l2,star:parseFloat(f.star)||4,price_tier:f.price_tier,aov_idr:Math.round((parseFloat(f.aov_usd)||40)*18000),tags:f.tags,photo:f.photo,promo:f.promo,drive_link:f.drive_link,discount_range:f.discount_range,tg_pick:f.tg_pick,ad_pick:f.ad_pick,published:true});
   };
   return (
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -655,8 +715,24 @@ function AddBrandForm({onAdd}) {
         <div><label style={S.formLabel}>Bintang</label><select value={f.star} onChange={e=>setF(p=>({...p,star:e.target.value}))} style={{...S.formInput,height:40}}>{["1","1.5","2","2.5","3","3.5","4","4.5","5"].map(s=><option key={s} value={s}>{s} ★</option>)}</select></div>
         <div><label style={S.formLabel}>AOV (USD)</label><input value={f.aov_usd} onChange={e=>setF(p=>({...p,aov_usd:e.target.value}))} style={S.formInput} type="number"/></div>
       </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <div><label style={S.formLabel}>⚡ Adtree Pick</label>
+          <select value={f.adtree_pick} onChange={e=>setF(p=>({...p,adtree_pick:e.target.value}))} style={{...S.formInput,height:40}}>
+            <option value="">Tidak</option><option value="Yes">Ya — Adtree Pick</option>
+          </select>
+        </div>
+        <div><label style={S.formLabel}>🎯 GO Featured</label>
+          <select value={f.tiktok_pick} onChange={e=>setF(p=>({...p,tiktok_pick:e.target.value}))} style={{...S.formInput,height:40}}>
+            <option value="">Tidak</option><option value="Yes">Ya — GO Featured</option>
+          </select>
+        </div>
+      </div>
       <div><label style={S.formLabel}>Tier Harga</label><select value={f.price_tier} onChange={e=>setF(p=>({...p,price_tier:e.target.value}))} style={{...S.formInput,height:40}}>{["Low [0,30]","Mid [30,50]","High [>50]"].map(t=><option key={t}>{t}</option>)}</select></div>
       <div><label style={S.formLabel}>Rentang Diskon</label><select value={f.discount_range} onChange={e=>setF(p=>({...p,discount_range:e.target.value}))} style={{...S.formInput,height:40}}>{DISCOUNT_OPTIONS.map(d=><option key={d} value={d}>{d||"— Tidak ada diskon —"}</option>)}</select></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <div><label style={S.formLabel}>TG Pick 🎯</label><select value={f.tg_pick} onChange={e=>setF(p=>({...p,tg_pick:e.target.value}))} style={{...S.formInput,height:40}}><option value="">—</option><option value="Yes">Yes</option></select></div>
+        <div><label style={S.formLabel}>AD Pick ⚡</label><select value={f.ad_pick} onChange={e=>setF(p=>({...p,ad_pick:e.target.value}))} style={{...S.formInput,height:40}}><option value="">—</option><option value="Yes">Yes</option></select></div>
+      </div>
       <div><label style={S.formLabel}>Provinsi</label><select value={f.l1} onChange={e=>setF(p=>({...p,l1:e.target.value}))} style={{...S.formInput,height:40}}>{ALL_L1.filter(r=>r!=="Semua Provinsi").map(r=><option key={r}>{r}</option>)}</select></div>
       <div><label style={S.formLabel}>Kampanye Aktif</label>
         <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:6}}>{ALL_TAGS.map(t=><button key={t} onClick={()=>toggle(t)} style={{fontSize:10,fontWeight:600,padding:"5px 10px",borderRadius:20,border:`1px solid ${f.tags.includes(t)?BRAND.yellow:BRAND.cardBorder}`,background:f.tags.includes(t)?BRAND.yellowDim:"transparent",color:f.tags.includes(t)?BRAND.yellow:BRAND.textMuted,cursor:"pointer"}}>{TAG_ICON[t]} {t}</button>)}</div>
