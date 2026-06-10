@@ -248,6 +248,7 @@ export default function App() {
   const [brandDrop,   setBrandDrop]   = useState(false);
   const [brandFilter, setBrandFilter] = useState("Semua");
   const [sortBy,      setSortBy]      = useState("score"); // score | comm_asc | comm_desc | price_asc | price_desc
+  const [showSort,    setShowSort]    = useState(false);
   const [view,        setView]        = useState("home");
   const [saved,       setSavedSt]     = useState(getSaved);
   const [adminUser,   setAdminUser]   = useState("");
@@ -311,7 +312,8 @@ export default function App() {
   const ALL_TAGS = cat==="hotels"?HOTEL_TAGS_NAMES:cat==="dining"?DINING_CATS_NAMES:TTD_TAGS_NAMES;
   const ALL_BRANDS = useMemo(()=>{
     if(cat!=="dining") return [];
-    return ["Semua",...new Set((data.dining||[]).map(h=>h.brand).filter(Boolean))].sort((a,b)=>a==="Semua"?-1:a.localeCompare(b));
+    const vals=[...new Set((data.dining||[]).map(h=>h.brand).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    return ["Semua",...vals];
   },[data.dining,cat]);
   const TAG_ICON = cat==="hotels"?HOTEL_TAG_ICON:cat==="dining"?DINING_CAT_ICON:TTD_TAG_ICON;
 
@@ -639,7 +641,7 @@ export default function App() {
           <div style={S.headerPill}>Brand Opportunities</div>
         </div>
         <div style={S.heroTitle}>Cuan Bareng<br/><span style={S.heroAccent}>Brand Terbaik</span> 🤑</div>
-        <div style={S.heroSub}>Pilih brand, buat konten, dan dapat komisi langsung masuk dari AdtreeGO.</div>
+        <div style={S.heroSub}>Pilih brand yang sesuai, buat konten kreatif, dan raih komisi bersama AdtreeGO.</div>
         <div style={S.searchWrap}>
           <span style={{fontSize:14,opacity:0.35}}>🔍</span>
           <input placeholder="Cari brand, kota, atau provinsi..." value={search} onChange={e=>setSearch(e.target.value)} style={S.searchInput}/>
@@ -734,14 +736,15 @@ export default function App() {
             </div>
           )}
 
-          {/* Sort bar */}
-          {view!=="saved"&&(
-            <div style={{display:"flex",gap:6,overflowX:"auto",scrollbarWidth:"none",paddingBottom:2}}>
-              <button style={{...S.tagBtn,...(sortBy==="score"?S.tagActive:{})}} onClick={()=>setSortBy("score")}>⚡ Skor</button>
-              <button style={{...S.tagBtn,...(sortBy==="comm_desc"?{...S.tagActive,background:"#2DD4A4",color:"#0A0C10"}:{})}} onClick={()=>setSortBy(sortBy==="comm_desc"?"score":"comm_desc")}>💸 Komisi ↓</button>
-              <button style={{...S.tagBtn,...(sortBy==="comm_asc"?{...S.tagActive,background:"#2DD4A4",color:"#0A0C10"}:{})}} onClick={()=>setSortBy(sortBy==="comm_asc"?"score":"comm_asc")}>💸 Komisi ↑</button>
-              <button style={{...S.tagBtn,...(sortBy==="price_desc"?S.tagActive:{})}} onClick={()=>setSortBy(sortBy==="price_desc"?"score":"price_desc")}>💰 Harga ↓</button>
-              <button style={{...S.tagBtn,...(sortBy==="price_asc"?S.tagActive:{})}} onClick={()=>setSortBy(sortBy==="price_asc"?"score":"price_asc")}>💰 Harga ↑</button>
+          {/* Sort — hidden by default, toggle via icon */}
+          {view!=="saved"&&showSort&&(
+            <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none",padding:"2px 0"}}>
+              {[["score","⚡ Skor"],["comm_desc","💸 Komisi ↓"],["comm_asc","💸 Komisi ↑"],["price_desc","💰 Harga ↓"],["price_asc","💰 Harga ↑"]].map(([val,lbl])=>(
+                <button key={val} onClick={()=>{setSortBy(val);setShowSort(false);}}
+                  style={{flexShrink:0,padding:"5px 10px",borderRadius:16,border:`1px solid ${sortBy===val?B.yellow:B.cardBorder}`,background:sortBy===val?B.yellow:"transparent",color:sortBy===val?"#0A0C10":B.textMuted,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                  {lbl}
+                </button>
+              ))}
             </div>
           )}
 
@@ -758,12 +761,16 @@ export default function App() {
           )}
           </div>
 
-ion label + count */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 16px 0"}}>
             <span style={{fontSize:12,fontWeight:700,color:B.textSub}}>
               {view==="saved"?"🔖 Tersimpan":pickFilter==="adtree"?"⚡ Adtree Pick":pickFilter==="tiktok"?"🎯 GO Featured":tagFilter?`${TAG_ICON[tagFilter]||""} ${tagFilter}`:cat==="hotels"?"Semua Akomodasi":cat==="dining"?"Semua Kuliner":"Semua Wisata"}
             </span>
-            <div style={{fontSize:11,fontWeight:800,color:B.yellow,background:B.yellowDim,borderRadius:20,padding:"3px 10px",border:`1px solid ${B.yellowBorder}`}}>{displayList.length} brand</div>
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              {view!=="saved"&&<button onClick={()=>setShowSort(!showSort)} style={{display:"flex",alignItems:"center",gap:4,background:showSort||sortBy!=="score"?B.yellowDim:"transparent",border:`1px solid ${showSort||sortBy!=="score"?B.yellow:B.cardBorder}`,borderRadius:8,padding:"4px 8px",cursor:"pointer",color:showSort||sortBy!=="score"?B.yellow:B.textMuted,fontSize:10,fontWeight:700}}>
+                ↕ {sortBy==="score"?"Urutkan":sortBy==="comm_desc"?"Komisi ↓":sortBy==="comm_asc"?"Komisi ↑":sortBy==="price_desc"?"Harga ↓":"Harga ↑"}
+              </button>}
+              <div style={{fontSize:11,fontWeight:800,color:B.yellow,background:B.yellowDim,borderRadius:20,padding:"3px 10px",border:`1px solid ${B.yellowBorder}`}}>{displayList.length} brand</div>
+            </div>
           </div>
 
           {/* Top 3 featured carousel — all industries */}
