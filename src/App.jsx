@@ -753,7 +753,7 @@ export default function App() {
           {/* Sort — hidden by default, toggle via icon */}
           {view!=="saved"&&showSort&&(
             <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none",padding:"2px 0"}}>
-              {[["score","⚡ Skor"],["comm_desc","💸 Komisi ↓"],["comm_asc","💸 Komisi ↑"],["price_desc","💰 Harga ↓"],["price_asc","💰 Harga ↑"]].map(([val,lbl])=>(
+              {[["score","⚡ Skor"],["comm_desc","💸 Komisi ↑"],["comm_asc","💸 Komisi ↓"],["price_desc","💰 Harga ↑"],["price_asc","💰 Harga ↓"]].map(([val,lbl])=>(
                 <button key={val} onClick={()=>{setSortBy(val);setShowSort(false);}}
                   style={{flexShrink:0,padding:"5px 10px",borderRadius:16,border:`1px solid ${sortBy===val?B.yellow:B.cardBorder}`,background:sortBy===val?B.yellow:"transparent",color:sortBy===val?"#0A0C10":B.textMuted,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
                   {lbl}
