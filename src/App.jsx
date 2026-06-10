@@ -753,7 +753,7 @@ export default function App() {
           {/* Sort — hidden by default, toggle via icon */}
           {view!=="saved"&&showSort&&(
             <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none",padding:"2px 0"}}>
-              {[["score","⚡ Skor"],["comm_desc","💸 Komisi ↑"],["comm_asc","💸 Komisi ↓"],["price_desc","💰 Harga ↑"],["price_asc","💰 Harga ↓"]].map(([val,lbl])=>(
+              {[["score","⚡ Skor"],["comm_desc","💸 Komisi Tertinggi"],["comm_asc","💸 Komisi Terendah"],["price_desc","💰 Harga Tertinggi"],["price_asc","💰 Harga Terendah"]].map(([val,lbl])=>(
                 <button key={val} onClick={()=>{setSortBy(val);setShowSort(false);}}
                   style={{flexShrink:0,padding:"5px 10px",borderRadius:16,border:`1px solid ${sortBy===val?B.yellow:B.cardBorder}`,background:sortBy===val?B.yellow:"transparent",color:sortBy===val?"#0A0C10":B.textMuted,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
                   {lbl}
@@ -781,7 +781,7 @@ export default function App() {
             </span>
             <div style={{display:"flex",gap:6,alignItems:"center"}}>
               {view!=="saved"&&<button onClick={()=>setShowSort(!showSort)} style={{display:"flex",alignItems:"center",gap:4,background:showSort||sortBy!=="score"?B.yellowDim:"transparent",border:`1px solid ${showSort||sortBy!=="score"?B.yellow:B.cardBorder}`,borderRadius:8,padding:"4px 8px",cursor:"pointer",color:showSort||sortBy!=="score"?B.yellow:B.textMuted,fontSize:10,fontWeight:700}}>
-                ↕ {sortBy==="score"?"Urutkan":sortBy==="comm_desc"?"Komisi ↓":sortBy==="comm_asc"?"Komisi ↑":sortBy==="price_desc"?"Harga ↓":"Harga ↑"}
+                {sortBy==="score"?"⇅ Urutkan":sortBy==="comm_desc"?"💸 Komisi ↓ Tertinggi":sortBy==="comm_asc"?"💸 Komisi ↑ Terendah":sortBy==="price_desc"?"💰 Harga ↓ Tertinggi":"💰 Harga ↑ Terendah"}
               </button>}
               <div style={{fontSize:11,fontWeight:800,color:B.yellow,background:B.yellowDim,borderRadius:20,padding:"3px 10px",border:`1px solid ${B.yellowBorder}`}}>{displayList.length} brand</div>
             </div>
