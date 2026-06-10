@@ -288,7 +288,14 @@ export default function App() {
         const parsed=await parseXLSXBuffer(ev.target.result);
         const total=parsed.hotels.length+parsed.dining.length+parsed.ttd.length;
         if(!total) throw new Error("Tidak ada data valid di file.");
-        const b64=btoa(String.fromCharCode(...new Uint8Array(ev.target.result)));
+        // Chunked base64 to avoid call stack overflow on large files
+        const bytes=new Uint8Array(ev.target.result);
+        let binary="";
+        const chunk=8192;
+        for(let i=0;i<bytes.length;i+=chunk){
+          binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+        }
+        const b64=btoa(binary);
         const res=await fetch(HF_COMMIT_URL,{
           method:"POST",
           headers:{"Authorization":`Bearer ${cfg.token}`,"Content-Type":"application/json"},
