@@ -245,6 +245,9 @@ export default function App() {
   const [tagFilter,   setTagFilter]   = useState(null);
   const [pickFilter,  setPickFilter]  = useState(null);
   const [drop,        setDrop]        = useState(false);
+  const [brandDrop,   setBrandDrop]   = useState(false);
+  const [brandFilter, setBrandFilter] = useState("Semua");
+  const [sortBy,      setSortBy]      = useState("score"); // score | comm_asc | comm_desc | price_asc | price_desc
   const [view,        setView]        = useState("home");
   const [saved,       setSavedSt]     = useState(getSaved);
   const [adminUser,   setAdminUser]   = useState("");
@@ -302,9 +305,14 @@ export default function App() {
   const industryData = useMemo(()=>(data[cat]||[]).filter(h=>h.published),[data,cat]);
   const ALL_L1 = useMemo(()=>{
     if(cat==="dining") return [];
-    return ["Semua",...new Set((data[cat]||[]).map(h=>h.l1).filter(Boolean))].sort((a,b)=>a==="Semua"?-1:a.localeCompare(b));
+    const vals=[...new Set((data[cat]||[]).map(h=>h.l1).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    return ["Semua",...vals];
   },[data,cat]);
   const ALL_TAGS = cat==="hotels"?HOTEL_TAGS_NAMES:cat==="dining"?DINING_CATS_NAMES:TTD_TAGS_NAMES;
+  const ALL_BRANDS = useMemo(()=>{
+    if(cat!=="dining") return [];
+    return ["Semua",...new Set((data.dining||[]).map(h=>h.brand).filter(Boolean))].sort((a,b)=>a==="Semua"?-1:a.localeCompare(b));
+  },[data.dining,cat]);
   const TAG_ICON = cat==="hotels"?HOTEL_TAG_ICON:cat==="dining"?DINING_CAT_ICON:TTD_TAG_ICON;
 
   const filtered = useMemo(()=>{
@@ -316,12 +324,18 @@ export default function App() {
     }
     if(pickFilter==="adtree") d=d.filter(h=>h.adtree_pick==="Yes");
     if(pickFilter==="tiktok") d=d.filter(h=>h.tiktok_pick==="Yes");
+    if(brandFilter!=="Semua"&&cat==="dining") d=d.filter(h=>h.brand===brandFilter);
     if(search.trim()){
       const q=search.toLowerCase();
       d=d.filter(h=>(h.name||"").toLowerCase().includes(q)||(h.brand||"").toLowerCase().includes(q)||(h.city||"").toLowerCase().includes(q)||(h.l1||"").toLowerCase().includes(q));
     }
-    return d.sort((a,b)=>b.score-a.score);
-  },[industryData,l1Filter,tagFilter,pickFilter,search,cat]);
+    if(sortBy==="comm_asc") d=[...d].sort((a,b)=>(parseFloat(a.commission)||0)-(parseFloat(b.commission)||0));
+    else if(sortBy==="comm_desc") d=[...d].sort((a,b)=>(parseFloat(b.commission)||0)-(parseFloat(a.commission)||0));
+    else if(sortBy==="price_asc") d=[...d].sort((a,b)=>(a.aov||0)-(b.aov||0));
+    else if(sortBy==="price_desc") d=[...d].sort((a,b)=>(b.aov||0)-(a.aov||0));
+    else d=[...d].sort((a,b)=>b.score-a.score);
+    return d;
+  },[industryData,l1Filter,tagFilter,pickFilter,brandFilter,sortBy,search,cat]);
 
   const savedItems = useMemo(()=>[...data.hotels,...data.dining,...data.ttd].filter(h=>saved.includes(h.id)),[data,saved]);
   const displayList = view==="saved"?savedItems:filtered;
@@ -622,10 +636,7 @@ export default function App() {
       <header style={S.header}>
         <div style={S.topBar}>
           <img src={LOGO_SRC} alt="AdtreeGO" style={{height:26,width:"auto"}}/>
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <div style={S.headerPill}>Brand Opportunities</div>
-            <button onClick={e=>{e.stopPropagation();setView("admin");}} style={{background:"transparent",border:`1px solid ${B.cardBorder}`,borderRadius:8,padding:"4px 8px",color:B.textMuted,fontSize:12,cursor:"pointer"}}>⚙</button>
-          </div>
+          <div style={S.headerPill}>Brand Opportunities</div>
         </div>
         <div style={S.heroTitle}>Cuan Bareng<br/><span style={S.heroAccent}>Brand Terbaik</span> 🤑</div>
         <div style={S.heroSub}>Pilih brand, buat konten, dan dapat komisi langsung masuk dari AdtreeGO.</div>
@@ -640,7 +651,7 @@ export default function App() {
       <div style={{display:"flex",borderBottom:`1px solid ${B.cardBorder}`,padding:"0 16px"}}>
         {[["hotels","🏨","Akomodasi"],["dining","🍜","Kuliner"],["ttd","🎡","Wisata"]].map(([id,ico,lbl])=>(
           <button key={id} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"10px 4px",background:"transparent",border:"none",cursor:"pointer",borderBottom:`2px solid ${cat===id&&view==="home"?B.yellow:B.cardBorder}`,color:cat===id&&view==="home"?B.yellow:B.textMuted,transition:"all 0.15s"}}
-            onClick={()=>{setCat(id);setView("home");setTagFilter(null);setPickFilter(null);setL1Filter("Semua");setSearch("");}}>
+            onClick={()=>{setCat(id);setView("home");setTagFilter(null);setPickFilter(null);setL1Filter("Semua");setBrandFilter("Semua");setSearch("");setSortBy("score");}}>
             <span style={{fontSize:18}}>{ico}</span>
             <span style={{fontSize:10,fontWeight:700,letterSpacing:"0.04em"}}>{lbl}</span>
             <span style={{fontSize:9,color:cat===id&&view==="home"?B.yellow+"99":B.textMuted}}>{catCounts[id]}</span>
@@ -667,49 +678,87 @@ export default function App() {
           {/* Filters */}
           <div style={{padding:"12px 16px 0",display:"flex",flexDirection:"column",gap:8}}>
             {hasPicks&&view!=="saved"&&(
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={e=>{e.stopPropagation();setPickFilter(pickFilter==="adtree"?null:"adtree");setTagFilter(null);}}
-                  style={{flex:1,padding:"8px 6px",borderRadius:10,border:`1px solid ${pickFilter==="adtree"?B.yellow:B.yellowBorder}`,background:pickFilter==="adtree"?"linear-gradient(135deg,#F5C842,#F5A020)":B.yellowDim,color:pickFilter==="adtree"?"#0A0C10":B.yellow,fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
-                  ⚡ Adtree Pick
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={e=>{e.stopPropagation();setPickFilter(pickFilter==="adtree"?null:"adtree");setTagFilter(null);}}
+                style={{flex:1,padding:"8px 6px",borderRadius:10,border:`1px solid ${pickFilter==="adtree"?B.yellow:B.yellowBorder}`,background:pickFilter==="adtree"?"linear-gradient(135deg,#F5C842,#F5A020)":B.yellowDim,color:pickFilter==="adtree"?"#0A0C10":B.yellow,fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                ⚡ Adtree Pick
+              </button>
+              <button onClick={e=>{e.stopPropagation();setPickFilter(pickFilter==="tiktok"?null:"tiktok");setTagFilter(null);}}
+                style={{flex:1,padding:"8px 6px",borderRadius:10,border:`1px solid ${pickFilter==="tiktok"?"#FF6B8A":"#FF6B8A44"}`,background:pickFilter==="tiktok"?"linear-gradient(135deg,#FF2D55,#FF6B8A)":"#FF2D5510",color:pickFilter==="tiktok"?"#fff":"#FF6B8A",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                🎯 GO Featured
+              </button>
+            </div>
+          )}
+
+          {/* Province dropdown — hotels & ttd */}
+          {cat!=="dining"&&view!=="saved"&&ALL_L1.length>1&&(
+            <div style={{position:"relative",zIndex:20}} onClick={e=>e.stopPropagation()}>
+              <button style={{...S.regionBtn,width:"100%"}} onClick={()=>{setDrop(!drop);setBrandDrop(false);}}>
+                <span>📍</span>
+                <span style={{fontSize:12,fontWeight:600,color:B.textSub,flex:1,textAlign:"left"}}>{l1Filter==="Semua"?"Semua Provinsi":l1Filter}</span>
+                <span style={{fontSize:9,color:B.textMuted}}>{drop?"▲":"▼"}</span>
+              </button>
+              {drop&&(
+                <div style={S.dropdown}>
+                  {ALL_L1.map(r=>(
+                    <div key={r} style={{...S.dropItem,...(l1Filter===r?S.dropActive:{})}} onClick={()=>{setL1Filter(r);setDrop(false);}}>
+                      <span>{r==="Semua"?"🗺️":"📍"}</span>
+                      <span style={{flex:1}}>{r==="Semua"?"Semua Provinsi":r}</span>
+                      {l1Filter===r&&<span style={{color:B.yellow}}>✓</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Brand dropdown — dining only */}
+          {cat==="dining"&&view!=="saved"&&ALL_BRANDS.length>1&&(
+            <div style={{position:"relative",zIndex:20}} onClick={e=>e.stopPropagation()}>
+              <button style={{...S.regionBtn,width:"100%"}} onClick={()=>{setBrandDrop(!brandDrop);setDrop(false);}}>
+                <span>🏪</span>
+                <span style={{fontSize:12,fontWeight:600,color:B.textSub,flex:1,textAlign:"left"}}>{brandFilter==="Semua"?"Semua Brand":brandFilter}</span>
+                <span style={{fontSize:9,color:B.textMuted}}>{brandDrop?"▲":"▼"}</span>
+              </button>
+              {brandDrop&&(
+                <div style={S.dropdown}>
+                  {ALL_BRANDS.map(b=>(
+                    <div key={b} style={{...S.dropItem,...(brandFilter===b?S.dropActive:{})}} onClick={()=>{setBrandFilter(b);setBrandDrop(false);}}>
+                      <span>{b==="Semua"?"🍽️":"🏪"}</span>
+                      <span style={{flex:1}}>{b==="Semua"?"Semua Brand":b}</span>
+                      {brandFilter===b&&<span style={{color:B.yellow}}>✓</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sort bar */}
+          {view!=="saved"&&(
+            <div style={{display:"flex",gap:6,overflowX:"auto",scrollbarWidth:"none",paddingBottom:2}}>
+              <button style={{...S.tagBtn,...(sortBy==="score"?S.tagActive:{})}} onClick={()=>setSortBy("score")}>⚡ Skor</button>
+              <button style={{...S.tagBtn,...(sortBy==="comm_desc"?{...S.tagActive,background:"#2DD4A4",color:"#0A0C10"}:{})}} onClick={()=>setSortBy(sortBy==="comm_desc"?"score":"comm_desc")}>💸 Komisi ↓</button>
+              <button style={{...S.tagBtn,...(sortBy==="comm_asc"?{...S.tagActive,background:"#2DD4A4",color:"#0A0C10"}:{})}} onClick={()=>setSortBy(sortBy==="comm_asc"?"score":"comm_asc")}>💸 Komisi ↑</button>
+              <button style={{...S.tagBtn,...(sortBy==="price_desc"?S.tagActive:{})}} onClick={()=>setSortBy(sortBy==="price_desc"?"score":"price_desc")}>💰 Harga ↓</button>
+              <button style={{...S.tagBtn,...(sortBy==="price_asc"?S.tagActive:{})}} onClick={()=>setSortBy(sortBy==="price_asc"?"score":"price_asc")}>💰 Harga ↑</button>
+            </div>
+          )}
+
+          {/* Tag/category chips */}
+          {view!=="saved"&&(
+            <div style={{display:"flex",gap:6,overflowX:"auto",scrollbarWidth:"none",paddingBottom:2}}>
+              <button style={{...S.tagBtn,...(tagFilter===null&&pickFilter===null?S.tagActive:{})}} onClick={()=>{setTagFilter(null);setPickFilter(null);}}>Semua</button>
+              {ALL_TAGS.map(t=>(
+                <button key={t} style={{...S.tagBtn,...(tagFilter===t?S.tagActive:{})}} onClick={()=>setTagFilter(tagFilter===t?null:t)}>
+                  {TAG_ICON[t]} {t}
                 </button>
-                <button onClick={e=>{e.stopPropagation();setPickFilter(pickFilter==="tiktok"?null:"tiktok");setTagFilter(null);}}
-                  style={{flex:1,padding:"8px 6px",borderRadius:10,border:`1px solid ${pickFilter==="tiktok"?"#FF6B8A":"#FF6B8A44"}`,background:pickFilter==="tiktok"?"linear-gradient(135deg,#FF2D55,#FF6B8A)":"#FF2D5510",color:pickFilter==="tiktok"?"#fff":"#FF6B8A",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
-                  🎯 GO Featured
-                </button>
-              </div>
-            )}
-            {cat!=="dining"&&view!=="saved"&&ALL_L1.length>1&&(
-              <div style={{position:"relative",zIndex:20}} onClick={e=>e.stopPropagation()}>
-                <button style={{...S.regionBtn,width:"100%"}} onClick={()=>setDrop(!drop)}>
-                  <span>📍</span>
-                  <span style={{fontSize:12,fontWeight:600,color:B.textSub,flex:1,textAlign:"left"}}>{l1Filter==="Semua"?"Semua Provinsi":l1Filter}</span>
-                  <span style={{fontSize:9,color:B.textMuted}}>{drop?"▲":"▼"}</span>
-                </button>
-                {drop&&(
-                  <div style={S.dropdown}>
-                    {ALL_L1.map(r=>(
-                      <div key={r} style={{...S.dropItem,...(l1Filter===r?S.dropActive:{})}} onClick={()=>{setL1Filter(r);setDrop(false);}}>
-                        <span>{r==="Semua"?"🗺️":"📍"}</span><span style={{flex:1}}>{r==="Semua"?"Semua Provinsi":r}</span>
-                        {l1Filter===r&&<span style={{color:B.yellow}}>✓</span>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {view!=="saved"&&(
-              <div style={{display:"flex",gap:6,overflowX:"auto",scrollbarWidth:"none",paddingBottom:2}}>
-                <button style={{...S.tagBtn,...(tagFilter===null&&pickFilter===null?S.tagActive:{})}} onClick={()=>{setTagFilter(null);setPickFilter(null);}}>Semua</button>
-                {ALL_TAGS.map(t=>(
-                  <button key={t} style={{...S.tagBtn,...(tagFilter===t?S.tagActive:{})}} onClick={()=>setTagFilter(tagFilter===t?null:t)}>
-                    {TAG_ICON[t]} {t}
-                  </button>
-                ))}
-              </div>
-            )}
+              ))}
+            </div>
+          )}
           </div>
 
-          {/* Section label + count */}
+ion label + count */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 16px 0"}}>
             <span style={{fontSize:12,fontWeight:700,color:B.textSub}}>
               {view==="saved"?"🔖 Tersimpan":pickFilter==="adtree"?"⚡ Adtree Pick":pickFilter==="tiktok"?"🎯 GO Featured":tagFilter?`${TAG_ICON[tagFilter]||""} ${tagFilter}`:cat==="hotels"?"Semua Akomodasi":cat==="dining"?"Semua Kuliner":"Semua Wisata"}
