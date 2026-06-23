@@ -53,6 +53,36 @@ const fmtIdr = n => {
   if(n>=1000) return "Rp"+(n/1000).toFixed(0)+" Rb";
   return "Rp"+n;
 };
+
+// ── Discount math ──────────────────────────────────────────────────────────
+// discount_range from sheet (e.g. "10-15%", "~5%", "Max 40%") → midpoint % used for price calc
+function discountMidpoint(range) {
+  if(!range) return 0;
+  const s = String(range).trim();
+  // "Max 40%" → 40
+  const maxMatch = s.match(/max\s*(\d+(?:\.\d+)?)\s*%/i);
+  if(maxMatch) return Math.round(parseFloat(maxMatch[1]));
+  // "~5%" → 5
+  const tildeMatch = s.match(/~\s*(\d+(?:\.\d+)?)\s*%/);
+  if(tildeMatch) return Math.round(parseFloat(tildeMatch[1]));
+  // "10-15%" → midpoint rounded
+  const rangeMatch = s.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*%/);
+  if(rangeMatch) {
+    const lo=parseFloat(rangeMatch[1]), hi=parseFloat(rangeMatch[2]);
+    return Math.round((lo+hi)/2);
+  }
+  // plain "12%"
+  const plainMatch = s.match(/(\d+(?:\.\d+)?)\s*%/);
+  if(plainMatch) return Math.round(parseFloat(plainMatch[1]));
+  return 0;
+}
+
+// originalPrice (from sheet aov_idr) + discount_range → discounted price shown in app
+function calcDiscountedPrice(originalPrice, discountRange) {
+  const pct = discountMidpoint(discountRange);
+  if(!pct || !originalPrice) return originalPrice||0;
+  return Math.round(originalPrice * (1 - pct/100));
+}
 const normTier = t => {
   if(!t) return "Mid";
   const s=String(t).toLowerCase();
@@ -111,8 +141,9 @@ function parseHotelSheet(rows) {
     adtree_pick:r.adtree_pick==="Yes"||r.adtree_pick===1?"Yes":"",
     tiktok_pick:r.tiktok_pick==="Yes"||r.tiktok_pick===1?"Yes":"",
     discount:r.discount_range||"", commission:r.commision_rate||"",
-    promo:r.promo_text||"", aov:Number(r.aov_idr)||0, drive:r.drive_link||"",
+    promo:r.promo_text||"", originalPrice:Number(r.aov_idr)||0, drive:r.drive_link||"",
   })).filter(r=>r.name.trim()).map(r=>({...r,
+    aov:calcDiscountedPrice(r.originalPrice,r.discount),
     score:calcScore(r),
     photo:r.photo||fp(r.id),
     thumb:r.photo?r.photo.replace("w=400&h=260","w=80&h=80"):ft(r.id),
@@ -129,8 +160,9 @@ function parseDiningSheet(rows) {
     cats:DINING_CATS_KEYS.map((k,i)=>r[k]==="Yes"||r[k]===1?DINING_CATS_NAMES[i]:null).filter(Boolean),
     adtree_pick:"", tiktok_pick:"",
     discount:r.discount_range||"", commission:r.commision_rate||"",
-    promo:r.promo_text||"", aov:Number(r.aov_idr)||0, drive:r.drive_link||"",
+    promo:r.promo_text||"", originalPrice:Number(r.aov_idr)||0, drive:r.drive_link||"",
   })).filter(r=>r.name.trim()).map(r=>({...r,
+    aov:calcDiscountedPrice(r.originalPrice,r.discount),
     score:calcScore({...r,tags:r.cats}),
     photo:r.photo||fp(r.id),
     thumb:r.photo?r.photo.replace("w=400&h=260","w=80&h=80"):ft(r.id),
@@ -148,8 +180,9 @@ function parseTTDSheet(rows) {
     adtree_pick:r.adtree_pick==="Yes"||r.adtree_pick===1?"Yes":"",
     tiktok_pick:r.tiktok_pick==="Yes"||r.tiktok_pick===1?"Yes":"",
     discount:r.discount_range||"", commission:r.commision_rate||"",
-    promo:r.promo_text||"", aov:Number(r.aov_idr)||0, drive:r.drive_link||"",
+    promo:r.promo_text||"", originalPrice:Number(r.aov_idr)||0, drive:r.drive_link||"",
   })).filter(r=>r.name.trim()).map(r=>({...r,
+    aov:calcDiscountedPrice(r.originalPrice,r.discount),
     score:calcScore(r),
     photo:r.photo||fp(r.id),
     thumb:r.photo?r.photo.replace("w=400&h=260","w=80&h=80"):ft(r.id),
@@ -266,9 +299,9 @@ export default function App() {
       .then(r=>{if(!r.ok)throw new Error("HF fetch failed");return r.json();})
       .then(d=>{
         setData({
-          hotels:(d.hotels||[]).map(r=>({...r,score:calcScore(r),photo:r.photo||fp(r.id),thumb:r.photo?r.photo.replace("w=400&h=260","w=80&h=80"):ft(r.id),promo:r.promo||autoPromo(r.id)})),
-          dining:(d.dining||[]).map(r=>({...r,score:calcScore({...r,tags:r.cats}),photo:r.photo||fp(r.id),thumb:r.photo?r.photo.replace("w=400&h=260","w=80&h=80"):ft(r.id),promo:r.promo||autoPromo(r.id)})),
-          ttd:(d.ttd||[]).map(r=>({...r,score:calcScore(r),photo:r.photo||fp(r.id),thumb:r.photo?r.photo.replace("w=400&h=260","w=80&h=80"):ft(r.id),promo:r.promo||autoPromo(r.id)})),
+          hotels:(d.hotels||[]).map(r=>({...r,aov:calcDiscountedPrice(r.originalPrice,r.discount),score:calcScore(r),photo:r.photo||fp(r.id),thumb:r.photo?r.photo.replace("w=400&h=260","w=80&h=80"):ft(r.id),promo:r.promo||autoPromo(r.id)})),
+          dining:(d.dining||[]).map(r=>({...r,aov:calcDiscountedPrice(r.originalPrice,r.discount),score:calcScore({...r,tags:r.cats}),photo:r.photo||fp(r.id),thumb:r.photo?r.photo.replace("w=400&h=260","w=80&h=80"):ft(r.id),promo:r.promo||autoPromo(r.id)})),
+          ttd:(d.ttd||[]).map(r=>({...r,aov:calcDiscountedPrice(r.originalPrice,r.discount),score:calcScore(r),photo:r.photo||fp(r.id),thumb:r.photo?r.photo.replace("w=400&h=260","w=80&h=80"):ft(r.id),promo:r.promo||autoPromo(r.id)})),
         });
         setLoading(false);
       })
@@ -296,9 +329,9 @@ export default function App() {
         if(!total) throw new Error("Tidak ada data valid di file.");
         // Convert parsed data to JSON and upload as plain text (HF rejects binary)
         const jsonContent = JSON.stringify({
-          hotels: parsed.hotels.map(({score,thumb,...r})=>r),
-          dining: parsed.dining.map(({score,thumb,...r})=>r),
-          ttd: parsed.ttd.map(({score,thumb,...r})=>r),
+          hotels: parsed.hotels.map(({score,thumb,aov,...r})=>r),
+          dining: parsed.dining.map(({score,thumb,aov,...r})=>r),
+          ttd: parsed.ttd.map(({score,thumb,aov,...r})=>r),
           updated: new Date().toISOString(),
         });
         // Base64 encode JSON string (text, no overflow risk)
@@ -563,16 +596,19 @@ export default function App() {
           {!isDining&&!isTTD&&(
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
               {[
-                {ico:"💰",lbl:"Harga/Malam",val:fmtIdr(sel.aov),big:true},
+                {ico:"💰",lbl:"Harga/Malam",val:fmtIdr(sel.aov),big:true,sub:sel.discount&&sel.originalPrice>sel.aov?fmtIdr(sel.originalPrice):null},
                 {ico:"💸",lbl:"Komisi",val:sel.commission||"—",color:B.green},
                 {ico:"⭐",lbl:"Bintang",val:sel.star>0?sel.star+" ★":"N/A"},
                 {ico:"📊",lbl:"Segmen",val:SEGMEN_LABEL[sel.segmen]||sel.segmen,color:SEGMEN_COLOR[sel.segmen]},
-              ].map(({ico,lbl,val,big,color})=>(
+              ].map(({ico,lbl,val,big,color,sub})=>(
                 <div key={lbl} style={{background:"#1A2640",borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10,border:`1px solid ${B.cardBorder}`}}>
                   <span style={{fontSize:22,flexShrink:0}}>{ico}</span>
                   <div>
                     <div style={{fontSize:9,color:B.textMuted,fontWeight:700,letterSpacing:"0.08em",marginBottom:2}}>{lbl}</div>
-                    <div style={{fontSize:big?16:14,fontWeight:800,color:color||B.text}}>{val}</div>
+                    <div style={{display:"flex",alignItems:"baseline",gap:6,flexWrap:"wrap"}}>
+                      <div style={{fontSize:big?16:14,fontWeight:800,color:color||B.text}}>{val}</div>
+                      {sub&&<div style={{fontSize:10,color:B.textMuted,textDecoration:"line-through"}}>{sub}</div>}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -582,14 +618,15 @@ export default function App() {
           {isDining&&(
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
               {[
-                {ico:"💰",lbl:"Harga Produk",val:fmtIdr(sel.aov)},
+                {ico:"💰",lbl:"Harga Produk",val:fmtIdr(sel.aov),sub:sel.discount&&sel.originalPrice>sel.aov?fmtIdr(sel.originalPrice):null},
                 {ico:"💸",lbl:"Komisi",val:sel.commission||"—",color:B.green},
                 {ico:"🏷️",lbl:"Diskon",val:sel.discount||"—",color:B.red},
-              ].map(({ico,lbl,val,color})=>(
+              ].map(({ico,lbl,val,color,sub})=>(
                 <div key={lbl} style={{background:"#1A2640",borderRadius:12,padding:"10px",display:"flex",flexDirection:"column",gap:3,border:`1px solid ${B.cardBorder}`}}>
                   <span style={{fontSize:18}}>{ico}</span>
                   <div style={{fontSize:9,color:B.textMuted,fontWeight:700,letterSpacing:"0.08em"}}>{lbl}</div>
                   <div style={{fontSize:12,fontWeight:800,color:color||B.text}}>{val}</div>
+                  {sub&&<div style={{fontSize:9,color:B.textMuted,textDecoration:"line-through"}}>{sub}</div>}
                 </div>
               ))}
             </div>
@@ -598,14 +635,15 @@ export default function App() {
           {isTTD&&(
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
               {[
-                {ico:"🎟️",lbl:"Harga/Tiket",val:fmtIdr(sel.aov)},
+                {ico:"🎟️",lbl:"Harga/Tiket",val:fmtIdr(sel.aov),sub:sel.discount&&sel.originalPrice>sel.aov?fmtIdr(sel.originalPrice):null},
                 {ico:"💸",lbl:"Komisi",val:sel.commission||"—",color:B.green},
                 {ico:"🏷️",lbl:"Diskon",val:sel.discount||"—",color:B.red},
-              ].map(({ico,lbl,val,color})=>(
+              ].map(({ico,lbl,val,color,sub})=>(
                 <div key={lbl} style={{background:"#1A2640",borderRadius:12,padding:"10px",display:"flex",flexDirection:"column",gap:3,border:`1px solid ${B.cardBorder}`}}>
                   <span style={{fontSize:18}}>{ico}</span>
                   <div style={{fontSize:9,color:B.textMuted,fontWeight:700,letterSpacing:"0.08em"}}>{lbl}</div>
                   <div style={{fontSize:12,fontWeight:800,color:color||B.text}}>{val}</div>
+                  {sub&&<div style={{fontSize:9,color:B.textMuted,textDecoration:"line-through"}}>{sub}</div>}
                 </div>
               ))}
             </div>
@@ -635,7 +673,13 @@ export default function App() {
               <span>📂</span> Content asset belum tersedia
             </div>
           )}
-          <div style={{textAlign:"center",fontSize:10,color:B.textMuted}}>Powered by <span style={{color:B.yellow,fontWeight:700}}>AdtreeGO</span> · TikTok Indonesia</div>
+          <div style={{display:"flex",alignItems:"flex-start",gap:8,background:"#ffffff05",border:`1px solid ${B.cardBorder}`,borderRadius:12,padding:"12px 14px",marginTop:14}}>
+            <span style={{fontSize:14,flexShrink:0,marginTop:1}}>ℹ️</span>
+            <div style={{fontSize:10,color:B.textMuted,lineHeight:1.6}}>
+              Harga dan komisi di sini sekadar gambaran ya. Buat angka yang pasti, langsung cek aja di app TikTok GO 😊
+            </div>
+          </div>
+          <div style={{textAlign:"center",fontSize:10,color:B.textMuted,marginTop:12}}>Powered by <span style={{color:B.yellow,fontWeight:700}}>AdtreeGO</span> · TikTok Indonesia</div>
         </div>
       </div>
     );
@@ -861,7 +905,12 @@ export default function App() {
                 </div>
               );
             })}
-            <div style={{height:8}}/>
+            <div style={{display:"flex",alignItems:"flex-start",gap:8,background:"#ffffff05",border:`1px solid ${B.cardBorder}`,borderRadius:12,padding:"12px 14px",margin:"4px 0 8px"}}>
+              <span style={{fontSize:14,flexShrink:0,marginTop:1}}>ℹ️</span>
+              <div style={{fontSize:10,color:B.textMuted,lineHeight:1.6}}>
+                Harga dan komisi di sini sekadar gambaran ya. Buat angka yang pasti, langsung cek aja di app TikTok GO 😊
+              </div>
+            </div>
           </section>
         </>
       )}
